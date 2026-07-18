@@ -1,9 +1,0 @@
-{
-  "_comment": "大模型配置。把 api_key 填入你自己的免费 Key 即可启用真实解析；不想申请 Key 时把 mock 改为 true 可验证全链路。",
-  "_free_options": "免费大模型可选：硅基流动 SiliconFlow(默认,国内可用,https://siliconflow.cn 注册) / Groq(https://console.groq.com) / OpenRouter 等，只要是 OpenAI 兼容接口均可。",
-  "api_key": "",
-  "base_url": "https://api.siliconflow.cn/v1",
-  "model": "Qwen/Qwen2.5-7B-Instruct",
-  "timeout": 30,
-  "mock": false
-}
