@@ -1,0 +1,82 @@
+%% 图 A · 平均分配（spDistribute）
+sequenceDiagram
+    participant U as 用户
+    participant D as spDistribute 处理
+    participant C as STPCore.splitIdlePlan
+    participant M as minutesToPeriods / 紫卡
+
+    U->>D: 点击 "平均分配规划"
+    D->>D: chosen = tags.filter(t=>selected[t])
+    alt chosen.length === 0
+        D-->>U: toast "请先选择至少 1 个待办标签"
+        D->>D: return（不退回全部标签，Q2）
+    else selectedBlocks.length === 0
+        D-->>U: toast "请先框选空闲时间段"
+        D->>D: return
+    else
+        D->>C: splitIdlePlan(selectedBlocks, chosen, {minSeg:20})
+        alt !split.ok (INSUFFICIENT_TIME)
+            D-->>U: toast "空闲时间不足以分配给 N 个标签（每个至少需 20 分钟）"
+            D->>D: return（P1-1）
+        else ok
+            loop 每段 seg ∈ split.segments（按标签序）
+                D->>M: per = minutesToPeriods(seg.s, seg.e)
+                M-->>D: {startPeriod,endPeriod}
+                D->>M: push selfPlan{title:seg.tag, notes:""}
+            end
+            D->>M: saveSelfPlans() → render()（紫卡）
+            D-->>U: toast "已分配 N 项规划到课程表"
+        end
+    end
+
+%% 图 B · AI 每标签一段（spAi，串行 + 进度 + 单标签降级）
+sequenceDiagram
+    participant U as 用户
+    participant A as spAi 处理
+    participant C as STPCore.splitIdlePlan
+    participant B as buildAiMessagesForTag
+    participant F as callAiPlan (fetch /api/ai/plan)
+
+    U->>A: 点击 "⚡ AI 生成复习建议"
+    A->>A: chosen = tags.filter(t=>selected[t])
+    alt chosen.length === 0
+        A-->>U: toast "请先选择至少 1 个待办标签"
+        A->>A: return（Q2）
+    else selectedBlocks.length === 0
+        A-->>U: toast "请先框选空闲时间段"
+        A->>A: return
+    else
+        A->>A: btn.disabled=true; spAiStatus="⏳ AI 生成中…"
+        A->>C: splitIdlePlan(selectedBlocks, chosen, {minSeg:20})
+        alt !split.ok (INSUFFICIENT_TIME)
+            A-->>U: toast "空闲时间不足以分配给 N 个标签（每个至少需 20 分钟）"
+            A->>A: 恢复按钮; return（P1-1）
+        else ok
+            A->>A: segments = split.segments; degraded=[]
+            loop i = 0 .. N-1（串行 await，不并发）
+                A->>A: spAiStatus = "⏳ 正在为第 (i+1)/N 个标签生成复习建议…"
+                A->>B: buildAiMessagesForTag(chosen[i])
+                B-->>A: messages
+                A->>F: await callAiPlan(messages, detectTemplate(chosen[i]))
+                F-->>A: {ok, plan, degraded, reason}
+                alt ok && plan
+                    A->>A: segments[i].notes = plan
+                else 降级（限流/超时/断网…）
+                    A->>A: segments[i].notes = localFallback(chosen[i])
+                    A->>A: degraded.push(i)
+                end
+            end
+            loop 每段 seg ∈ segments
+                A->>A: per = minutesToPeriods(seg.s, seg.e); push selfPlan{title:seg.tag, notes:seg.notes}
+            end
+            A->>A: saveSelfPlans() → render()（紫卡）
+            alt degraded.length === 0
+                A-->>U: toast "✅ 已为 N 个标签生成复习建议"
+                A->>A: spAiStatus="✅ 已为 N 个标签生成复习建议"
+            else
+                A-->>U: toast "⚠️ 第 X、Y 个标签 AI 暂不可用，已用本地建议"
+                A->>A: spAiStatus="⚠️ 第 X、Y 个标签 AI 暂不可用，已用本地建议"
+            end
+            A->>A: btn.disabled=false; closeSheet()
+        end
+    end

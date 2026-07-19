@@ -1,0 +1,40 @@
+classDiagram
+    class IdleBlock {
+        +number s
+        +number e
+    }
+    class PlanSegment {
+        +number s
+        +number e
+        +string tag
+    }
+    class SplitResult {
+        +boolean ok
+        +PlanSegment[] segments
+        +string reason
+        +number needMinutes
+        +number haveMinutes
+    }
+    class SelfPlan {
+        +string id
+        +string title
+        +string date
+        +number weekday
+        +number startPeriod
+        +number endPeriod
+        +string notes
+    }
+    class AiPlanResponse {
+        +boolean ok
+        +string plan
+        +boolean degraded
+        +string reason
+        +string model
+    }
+    class STPCore {
+        +splitIdlePlan(blocks, tags, opts) SplitResult
+    }
+    STPCore ..> SplitResult : returns
+    SplitResult o-- PlanSegment : segments[]
+    SelfPlan ..> PlanSegment : 经 minutesToPeriods 派生
+    AiPlanResponse <.. spAi : 每标签一次响应
