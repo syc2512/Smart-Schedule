@@ -1,0 +1,18 @@
+{
+  "name": "智能课程表 Pro",
+  "short_name": "课程表 Pro",
+  "description": "AI 驱动的课表导入与学习规划助手",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8faf9",
+  "theme_color": "#0f766e",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

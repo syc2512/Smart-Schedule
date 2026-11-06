@@ -1,0 +1,38 @@
+# 敏感信息与环境文件
+.env
+
+# 虚拟环境
+.venv/
+venv/
+
+# Python 缓存
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# 日志文件（运行时生成）
+logs/
+logs_test/
+*.log
+*.log.*
+*.log.gz
+
+# 前端依赖与构建产物
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+frontend/e2e-screenshot.png
+
+# 本地数据库
+data/
+
+# 外部开源参考仓库（不作为本项目源码提交）
+shiguangschedule-main/
+calender-transporter-main/
+
+# 编辑器
+.idea/
+.vscode/
+.DS_Store
